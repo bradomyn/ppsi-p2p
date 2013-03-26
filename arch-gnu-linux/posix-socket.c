@@ -116,6 +116,9 @@ int posix_recv_packet(struct pp_instance *ppi, void *pkt, int len,
 
 	POSIX_ARCH(ppi)->rcv_switch = !POSIX_ARCH(ppi)->rcv_switch;
 
+	ch1 = &(NP(ppi)->ch[PP_NP_EVT]);
+	ch2 = &(NP(ppi)->ch[PP_NP_GEN]);
+
 	if (ch1->pkt_present)
 		return posix_recv_msg(ch1->fd, pkt, len, t);
 
