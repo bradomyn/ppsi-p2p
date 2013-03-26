@@ -6,6 +6,8 @@
 #include <ppsi/ppsi.h>
 #include <ppsi/diag.h>
 
+#define VERB_LOG_MSGS 1
+
 void pp_init_clock(struct pp_instance *ppi)
 {
 	PP_PRINTF("SERVO init clock\n");
