@@ -8,7 +8,7 @@ CFLAGS += -ffreestanding -Os
 BATHOS_ROOT ?= ../bathos
 BATHOS_ARCH ?= lpc2104
 
-CFLAGS += -I$(BATHOS_ROOT)/include -I$(BATHOS)/arch-$(BATHOS_ARCH)
+CFLAGS += -I$(BATHOS_ROOT)/include -I$(BATHOS_ROOT)/arch-$(BATHOS_ARCH) -Itools
 
 # Let's use the pp_printf we already have in bathos
 CONFIG_NO_PRINTF = y
@@ -24,6 +24,7 @@ LIBS += -L$A -larch
 OBJ-libarch := \
 	$A/bathos-task.o \
 	$A/memcmp.o \
+	lib/dump-funcs.o \
 	lib/div64.o
 
 # We only support our own time operations
