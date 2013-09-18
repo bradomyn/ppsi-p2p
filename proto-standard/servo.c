@@ -7,6 +7,7 @@
  */
 
 #include <ppsi/ppsi.h>
+#include "../proto-ext-whiterabbit/wr-api.h"
 
 void pp_init_clock(struct pp_instance *ppi)
 {
@@ -187,7 +188,9 @@ static void __pp_update_clock(struct pp_instance *ppi)
 	}
 
 	if (DSCUR(ppi)->offsetFromMaster.seconds) {
-		/* if secs, reset clock or set freq adjustment to max */
+		/* if secs, stop pps andreset clock or set freq adjustment to max */
+		wr_enable_timing_output(ppi, 0);
+
 		if (!OPTS(ppi)->no_adjust) {
 			if (!OPTS(ppi)->no_rst_clk) {
 				/* FIXME: use adjust instead of set? */
@@ -208,6 +211,11 @@ static void __pp_update_clock(struct pp_instance *ppi)
 		}
 		return;
 	}
+
+	if (DSCUR(ppi)->offsetFromMaster.nanoseconds < 1000000)
+		wr_enable_timing_output(ppi, 1);
+	else
+		wr_enable_timing_output(ppi, 0);
 
 	/* the PI controller */
 
