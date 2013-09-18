@@ -69,8 +69,12 @@ void pp_update_delay(struct pp_instance *ppi, TimeInternal *correction_field)
 	/* Compute one-way delay */
 	div2_TimeInternal(mpd);
 
-
 	if (mpd->seconds) {
+		/* FIXME check this: mpd should never have 'seconds' value.
+		 * This patch limits mpd, avoiding big errors in first "time set"
+		 * initialization */
+		mpd->seconds = 0;
+
 		/* cannot filter with secs, clear filter */
 		owd_fltr->s_exp = 0;
 		owd_fltr->nsec_prev = 0;
