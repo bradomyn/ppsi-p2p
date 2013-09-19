@@ -19,6 +19,8 @@ void pp_init_clock(struct pp_instance *ppi)
 	SRV(ppi)->obs_drift = 0;	/* clears clock servo accumulator (the
 					 * I term) */
 	SRV(ppi)->owd_fltr.s_exp = 0;	/* clears one-way delay filter */
+	SRV(ppi)->sync_tresh_us = 1000; /* FIXME should be configurable */
+	SRV(ppi)->sync = 0;
 
 	/* level clock */
 	if (!OPTS(ppi)->no_adjust)
@@ -173,6 +175,7 @@ static void __pp_update_clock(struct pp_instance *ppi)
 {
 	Integer32 adj;
 	TimeInternal time_tmp;
+	int sync_tmp;
 
 	if (OPTS(ppi)->max_rst) { /* If max_rst is 0 then it's OFF */
 		if (DSCUR(ppi)->offsetFromMaster.seconds) {
@@ -194,7 +197,10 @@ static void __pp_update_clock(struct pp_instance *ppi)
 
 	if (DSCUR(ppi)->offsetFromMaster.seconds) {
 		/* if secs, stop pps andreset clock or set freq adjustment to max */
-		wr_enable_timing_output(ppi, 0);
+		if (SRV(ppi)->sync) {
+			wr_enable_timing_output(ppi, 0);
+			SRV(ppi)->sync = 0;
+		}
 
 		if (!OPTS(ppi)->no_adjust) {
 			if (!OPTS(ppi)->no_rst_clk) {
@@ -217,10 +223,16 @@ static void __pp_update_clock(struct pp_instance *ppi)
 		return;
 	}
 
-	if (DSCUR(ppi)->offsetFromMaster.nanoseconds < 1000000)
-		wr_enable_timing_output(ppi, 1);
-	else
-		wr_enable_timing_output(ppi, 0);
+	sync_tmp = (DSCUR(ppi)->offsetFromMaster.nanoseconds <
+		1000 * SRV(ppi)->sync_tresh_us) ? 1 : 0;
+
+	if (sync_tmp != SRV(ppi)->sync) {
+		SRV(ppi)->sync = sync_tmp;
+		if (sync_tmp)
+			wr_enable_timing_output(ppi, 1);
+		else
+			wr_enable_timing_output(ppi, 0);
+	}
 
 	/* the PI controller */
 

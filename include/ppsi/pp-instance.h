@@ -105,6 +105,8 @@ struct pp_servo {
 	Integer32 obs_drift;
 	struct pp_owd_fltr owd_fltr;
 	struct pp_ofm_fltr ofm_fltr;
+	int sync_tresh_us;
+	int sync; /* Boolean var, set to 1 if delay < sync_tresh_us */
 };
 
 /*
