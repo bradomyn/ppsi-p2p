@@ -102,6 +102,7 @@ int wrc_ptp_set_mode(int mode)
 		WR_DSPOR(ppi)->wrConfig = WR_M_ONLY;
 		ppi->master_only = TRUE;
 		ppi->slave_only = FALSE;
+		DSDEF(ppi)->clockQuality.clockClass = 13;
 		spll_init(SPLL_MODE_FREE_RUNNING_MASTER, 0, 1);
 		lock_timeout = LOCK_TIMEOUT_FM;
 		break;
