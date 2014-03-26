@@ -8,7 +8,7 @@ ppsi.bin
 
 *.cmd
 *.o
-.tmp_*
+.tmp*
 .config
 .config.old
 include/config

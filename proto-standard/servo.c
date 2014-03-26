@@ -140,16 +140,6 @@ void pp_servo_got_resp(struct pp_instance *ppi)
 		/* First time, keep what we have */
 		mpd_fltr->y = mpd->nanoseconds;
 	}
-	/* avoid overflowing filter */
-	s = OPTS(ppi)->s;
-	while (abs(mpd_fltr->y) >> (31 - s))
-		--s;
-	if (mpd_fltr->s_exp > 1 << s)
-		mpd_fltr->s_exp = 1 << s;
-	/* crank down filter cutoff by increasing 's_exp' */
-	if (mpd_fltr->s_exp < 1 << s)
-		++mpd_fltr->s_exp;
-
 	/*
 	 * It may happen that mpd appears as negative. This happens when
 	 * the slave clock is running fast to recover a late time: the
@@ -161,6 +151,16 @@ void pp_servo_got_resp(struct pp_instance *ppi)
 		mpd->nanoseconds = mpd_fltr->y;
 	if (mpd->nanoseconds < 0)
 		mpd->nanoseconds = 0;
+
+	/* find parametrs for filtering the outliers */
+	s = OPTS(ppi)->s;
+	while (abs(mpd_fltr->y) >> (31 - s))
+		--s;
+	if (mpd_fltr->s_exp > 1 << s)
+		mpd_fltr->s_exp = 1 << s;
+	/* crank down filter cutoff by increasing 's_exp' */
+	if (mpd_fltr->s_exp < 1 << s)
+		++mpd_fltr->s_exp;
 
 	/*
 	 * It may happen that mpd appears to be very big. This happens
@@ -178,13 +178,10 @@ void pp_servo_got_resp(struct pp_instance *ppi)
 		/* add fltr->s_exp to ensure we are not trapped into 0 */
 		mpd->nanoseconds = mpd_fltr->y * 2 + mpd_fltr->s_exp + 1;
 	}
-	/* filter 'meanPathDelay' (running average) */
-	mpd_fltr->y = (mpd_fltr->y * (mpd_fltr->s_exp - 1) + mpd->nanoseconds)
-		/ mpd_fltr->s_exp;
-	mpd->nanoseconds = mpd_fltr->y;
 
-	pp_diag(ppi, servo, 1, "After avg(%i), meanPathDelay: %i\n",
-		(int)mpd_fltr->s_exp, mpd->nanoseconds);
+	mpd_fltr->y = mpd->nanoseconds;
+
+	pp_diag(ppi, servo, 1, "Measured meanPathDelay: %i\n", mpd->nanoseconds);
 
 	/* update 'offsetFromMaster', (End to End mode) */
 	sub_TimeInternal(ofm, m_to_s_dly, mpd);
