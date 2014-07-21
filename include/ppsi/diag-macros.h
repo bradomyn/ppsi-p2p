@@ -33,6 +33,7 @@ enum pp_diag_things {
 	pp_dt_bmc	= 3,
 	pp_dt_ext	= 2,
 	pp_dt_config	= 1,
+	pp_dt_sim	= 0,
 };
 /*
  * Note: we may use less bits and have more things, without changing

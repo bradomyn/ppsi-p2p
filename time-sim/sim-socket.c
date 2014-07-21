@@ -124,7 +124,7 @@ static int sim_recv_msg(struct pp_instance *ppi, int fd, void *pkt, int len,
 	if (((*(Enumeration4 *) (pkt + 0)) & 0x0F) == PPM_DELAY_RESP) {
 		master_ns = SIM_PPI_ARCH(INST(ppg, SIM_MASTER))->time.current_ns;
 		slave_ns = SIM_PPI_ARCH(INST(ppg, SIM_SLAVE))->time.current_ns;
-		pp_diag(ppi, ext, 1, "Real ofm %lli\n",
+		pp_diag(ppi, sim, 1, "Real ofm %lli\n",
 					(long long)slave_ns - master_ns);
 		data->sim_iter_n++;
 	}

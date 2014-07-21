@@ -9,4 +9,4 @@ if [ $# != 1 ]; then
 fi
 
 grep "Real" $1 | \
-sed 's/diag-extension-[0-9]-SLAVE: Real ofm//g'
+sed 's/diag-simulator-[0-9]-SLAVE: Real ofm//g'

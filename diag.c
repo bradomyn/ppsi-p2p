@@ -15,6 +15,7 @@ static char *thing_name[] = {
 	[pp_dt_bmc]	= "diag-bmc",
 	[pp_dt_ext]	= "diag-extension",
 	[pp_dt_config]	= "diag-config",
+	[pp_dt_sim]	= "diag-simulator",
 };
 
 
@@ -64,7 +65,7 @@ unsigned long pp_diag_parse(char *diaglevel)
 	return ~0xf;
 #endif
 
-	while (*diaglevel && i >= 4) {
+	while (*diaglevel && i >= 0) {
 		if (*diaglevel < '0' || *diaglevel > '3')
 			break;
 		res |= ((*diaglevel - '0') << i);

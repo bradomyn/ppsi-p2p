@@ -578,6 +578,11 @@ addition of new masters as well.
 @item Configuration: at level 1 PPSi reports errors, at level 2 all
 configuration items being parsed (from either files or command line).
 
+@item Simulator: at level 1 PPSi reports the current offset between the
+simulated master and the slave; at level 2 it reports every call to the
+@i{sim_fast_forward_ns()} function, showing how many nanoseconds are being skipped
+with the jump forward.
+
 @end itemize
 
 The user is expected to pass diagnostic flags as a string,
