@@ -10,24 +10,30 @@
 #include "wr-api.h"
 #include "../proto-standard/common-fun.h"
 
+/* WRS_PRESENT is the entry point for a WR slave */
 int wr_present(struct pp_instance *ppi, unsigned char *pkt, int plen)
 {
 	int e = 0;
 
 	MsgSignaling wrsig_msg;
 
+	/*
+	 * Ugly special case: if we time out in this first slave-state,
+	 * then fake "is_new_state" so we restart the handshake
+	 */
+	if (!ppi->is_new_state && pp_timeout_z(ppi, PP_TO_EXT_0)) {
+		wr_handshake_timeout(ppi);
+		if (ppi->next_state == ppi->state)
+			ppi->is_new_state = 1; /* a retry */
+		else
+			goto out; /* no more retries */
+	}
+
 	if (ppi->is_new_state) {
-		WR_DSPOR(ppi)->wrMode = WR_SLAVE;
 		pp_timeout_set(ppi, PP_TO_EXT_0,
 			       WR_WRS_PRESENT_TIMEOUT_MS);
 		pp_timeout_restart_annrec(ppi);
 		e = msg_issue_wrsig(ppi, SLAVE_PRESENT);
-	}
-
-	if (pp_timeout_z(ppi, PP_TO_EXT_0)) {
-		ppi->next_state = PPS_LISTENING;
-		WR_DSPOR(ppi)->wrMode = NON_WR;
-		goto out;
 	}
 
 	if (plen == 0)

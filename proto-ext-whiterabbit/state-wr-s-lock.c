@@ -20,8 +20,8 @@ int wr_s_lock(struct pp_instance *ppi, unsigned char *pkt, int plen)
 	}
 
 	if (pp_timeout_z(ppi, PP_TO_EXT_0)) {
-		ppi->next_state = PPS_FAULTY;
-		wrp->wrMode = NON_WR;
+		wrp->ops->locking_disable(ppi);
+		wr_handshake_timeout(ppi);
 		goto out;
 	}
 

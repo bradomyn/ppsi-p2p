@@ -14,15 +14,21 @@ int wr_m_lock(struct pp_instance *ppi, unsigned char *pkt, int plen)
 	int e = 0;
 	MsgSignaling wrsig_msg;
 
-	if (ppi->is_new_state) {
-		WR_DSPOR(ppi)->wrMode = WR_MASTER;
-		e = msg_issue_wrsig(ppi, LOCK);
-		pp_timeout_set(ppi, PP_TO_EXT_0, WR_M_LOCK_TIMEOUT_MS);
+	/*
+	 * Ugly special case: if we time out in this first master-state,
+	 * then fake "is_new_state" so we restart the handshake
+	 */
+	if (!ppi->is_new_state && pp_timeout_z(ppi, PP_TO_EXT_0)) {
+		wr_handshake_timeout(ppi);
+		if (ppi->next_state == ppi->state)
+			ppi->is_new_state = 1; /* a retry */
+		else
+			goto out; /* no more retries */
 	}
 
-	if (pp_timeout_z(ppi, PP_TO_EXT_0)) {
-		ppi->next_state = PPS_MASTER;
-		goto out;
+	if (ppi->is_new_state) {
+		e = msg_issue_wrsig(ppi, LOCK);
+		pp_timeout_set(ppi, PP_TO_EXT_0, WR_M_LOCK_TIMEOUT_MS);
 	}
 
 	if (plen == 0)

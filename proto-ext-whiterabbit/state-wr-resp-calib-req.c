@@ -26,10 +26,8 @@ int wr_resp_calib_req(struct pp_instance *ppi, unsigned char *pkt, int plen)
 
 	if ((wrp->otherNodeCalSendPattern) &&
 	    (pp_timeout_z(ppi, PP_TO_EXT_0))) {
-		if (wrp->wrMode == WR_MASTER)
-			ppi->next_state = PPS_MASTER;
-		else
-			ppi->next_state = PPS_LISTENING;
+		wrp->ops->calib_pattern_disable(ppi);
+		wr_handshake_timeout(ppi);
 		goto out;
 	}
 

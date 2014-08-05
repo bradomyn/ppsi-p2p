@@ -18,13 +18,11 @@ int wr_locked(struct pp_instance *ppi, unsigned char *pkt, int plen)
 		pp_timeout_set(ppi, PP_TO_EXT_0,
 			       WR_DSPOR(ppi)->wrStateTimeout);
 
-
 		e = msg_issue_wrsig(ppi, LOCKED);
 	}
 
 	if (pp_timeout_z(ppi, PP_TO_EXT_0)) {
-		ppi->next_state = PPS_LISTENING;
-		WR_DSPOR(ppi)->wrMode = NON_WR;
+		wr_handshake_timeout(ppi);
 		goto out;
 	}
 

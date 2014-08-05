@@ -19,10 +19,7 @@ int wr_calibrated(struct pp_instance *ppi, unsigned char *pkt, int plen)
 	}
 
 	if (pp_timeout_z(ppi, PP_TO_EXT_0)) {
-		if (WR_DSPOR(ppi)->wrMode == WR_MASTER)
-			ppi->next_state = PPS_MASTER;
-		else
-			ppi->next_state = PPS_LISTENING;
+		wr_handshake_timeout(ppi);
 		goto out;
 	}
 
