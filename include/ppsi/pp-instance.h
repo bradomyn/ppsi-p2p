@@ -176,11 +176,14 @@ struct pp_instance {
 		waiting_for_follow:1,
 		slave_only:1,
 		master_only:1,
+		backup_only:1,
 		ethernet_mode:1;
 	char *iface_name;
 	int port_idx;
 
 	struct pp_instance_cfg cfg;
+	
+	int slave_prio; /*ML: used to prioritize slave ports (i.e. indicate backup)*/
 };
 
 struct pp_globals_cfg {

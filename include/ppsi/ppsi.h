@@ -315,6 +315,7 @@ extern int pp_config_file(struct pp_globals *ppg, int force, char *fname);
 #define PPSI_ROLE_AUTO		0
 #define PPSI_ROLE_MASTER	1
 #define PPSI_ROLE_SLAVE		2
+#define PPSI_ROLE_BACKUP	3
 
 #define PPSI_EXT_NONE		0
 #define PPSI_EXT_WR		1

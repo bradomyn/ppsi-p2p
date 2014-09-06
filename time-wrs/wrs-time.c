@@ -117,10 +117,11 @@ int wrs_locking_enable(struct pp_instance *ppi)
 {
 	int ret, rval;
 
-	pp_diag(ppi, time, 1, "Start locking\n");
+	pp_diag(ppi, time, 1, "Start locking (prio %d)\n", ppi->slave_prio);
 
 	ret = minipc_call(hal_ch, DEFAULT_TO, &__rpcdef_lock_cmd,
-			  &rval, ppi->iface_name, HEXP_LOCK_CMD_START, 0);
+			  &rval, ppi->iface_name, HEXP_LOCK_CMD_START, 
+			  ppi->slave_prio /*this is prio*/);
 
 	if ((ret < 0) || (rval < 0))
 		return WR_SPLL_ERROR;

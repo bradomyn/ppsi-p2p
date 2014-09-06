@@ -159,10 +159,20 @@ int main(int argc, char **argv)
 		if (ppi->cfg.role == PPSI_ROLE_MASTER) {
 			ppi->master_only = 1;
 			ppi->slave_only = 0;
+			ppi->backup_only = 0;
+			pp_printf("Startup: port %d is Master\n", i);
 		}
 		else if (ppi->cfg.role == PPSI_ROLE_SLAVE) {
 			ppi->master_only = 0;
 			ppi->slave_only = 1;
+			ppi->backup_only = 0;
+			pp_printf("Startup: port %d is Slave\n", i);
+		}
+		else if (ppi->cfg.role == PPSI_ROLE_BACKUP) {
+			ppi->master_only = 0;
+			ppi->slave_only = 0;
+			ppi->backup_only = 1;
+			pp_printf("Startup: port %d is Backup\n", i);
 		}
 
 		ppi->portDS = calloc(1, sizeof(*ppi->portDS));
@@ -178,6 +188,8 @@ int main(int argc, char **argv)
 		/* The following default names depend on TIME= at build time */
 		ppi->n_ops = &DEFAULT_NET_OPS;
 		ppi->t_ops = &DEFAULT_TIME_OPS;
+		
+		ppi->slave_prio = 0; /*ML: by default primary slave*/
 
 	}
 

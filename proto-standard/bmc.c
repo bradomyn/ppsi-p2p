@@ -76,6 +76,19 @@ static void s1(struct pp_instance *ppi, MsgHeader *hdr, MsgAnnounce *ann)
 	prop->frequencyTraceable = ((hdr->flagField[1] & FFB_FTRA) != 0);
 	prop->ptpTimescale = ((hdr->flagField[1] & FFB_PTP) != 0);
 
+	ppi->slave_prio = 0;
+
+	if (pp_hooks.s1)
+		pp_hooks.s1(ppi, hdr, ann);
+}
+
+/*ML: backup slave according to the WRSPEC. */
+static void s2(struct pp_instance *ppi, MsgHeader *hdr, MsgAnnounce *ann)
+{
+	ppi->slave_prio=1;
+	
+	pp_diag(ppi, bmc, 1,"backup slave at port: %d\n",ppi->port_idx);
+	
 	if (pp_hooks.s1)
 		pp_hooks.s1(ppi, hdr, ann);
 }
@@ -197,7 +210,10 @@ static int bmc_state_decision(struct pp_instance *ppi,
 
 	if (ppi->slave_only)
 		goto slave;
-
+	
+	if (ppi->backup_only)
+		goto backup;
+	
 	if ((!ppi->frgn_rec_num) && (ppi->state == PPS_LISTENING))
 		return PPS_LISTENING;
 
@@ -236,7 +252,8 @@ check_boundary_clk:
 		* Ebest is better by topology than Erbest */
 	if (!idcmp(&myself.ann.grandmasterIdentity,
 			&m->ann.grandmasterIdentity))
-		goto passive;
+		goto backup;
+// 		goto passive;
 	else
 		goto master;
 
@@ -245,6 +262,11 @@ passive:
 	pp_diag(ppi, bmc, 1,"%s: passive\n", __func__);
 	return PPS_PASSIVE;
 
+backup:
+	s2(ppi, &m->hdr, &m->ann);
+	pp_diag(ppi, bmc, 1,"%s: backup slave\n", __func__);
+	return PPS_SLAVE;
+	
 master:
 	m1(ppi);
 	pp_diag(ppi, bmc, 1,"%s: master\n", __func__);
