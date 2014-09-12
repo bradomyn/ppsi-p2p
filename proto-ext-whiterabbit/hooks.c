@@ -125,6 +125,7 @@ static int wr_handle_resp(struct pp_instance *ppi)
 	 * After we adjusted the pps counter, stamps are invalid, so
 	 * we'll have the Unix time instead, marked by "correct"
 	 */
+	pp_diag(ppi, servo, 1,"handle response, wrModeOn=%d\n",wrp->wrModeOn);
 	if (!wrp->wrModeOn) {
 		if (!ppi->t2.correct || !ppi->t3.correct) {
 			pp_diag(ppi, servo, 1,

@@ -35,6 +35,7 @@ int pp_slave(struct pp_instance *ppi, unsigned char *pkt, int plen)
 	if (plen == 0)
 		goto out;
 
+	pp_diag(ppi, frames, 1, "Message type: %d\n",hdr->messageType);
 	switch (hdr->messageType) {
 
 	case PPM_ANNOUNCE:
@@ -62,14 +63,17 @@ int pp_slave(struct pp_instance *ppi, unsigned char *pkt, int plen)
 
 		msg_unpack_delay_resp(pkt, &resp);
 
-		if ((memcmp(&DSPOR(ppi)->portIdentity.clockIdentity,
+		pp_diag(ppi, frames, 1, "rx delay resp\n");
+		
+		if (((memcmp(&DSPOR(ppi)->portIdentity.clockIdentity,
 			&resp.requestingPortIdentity.clockIdentity,
 			PP_CLOCK_IDENTITY_LENGTH) == 0) &&
 			((ppi->sent_seq[PPM_DELAY_REQ]) ==
 				hdr->sequenceId) &&
 			(DSPOR(ppi)->portIdentity.portNumber ==
 			resp.requestingPortIdentity.portNumber)
-			&& ppi->is_from_cur_par) {
+			&& ppi->is_from_cur_par)
+			|| ppi->slave_prio > 0) { // ML: bad hack !!!!
 
 			to_TimeInternal(&ppi->t4, &resp.receiveTimestamp);
 
@@ -78,7 +82,7 @@ int pp_slave(struct pp_instance *ppi, unsigned char *pkt, int plen)
 			 * I think the master should consider it when
 			 * generating t4, and report back a modified t4
 			 */
-
+			pp_diag(ppi, frames, 1, "next to hooks\n");
 			if (pp_hooks.handle_resp)
 				e = pp_hooks.handle_resp(ppi);
 			else
@@ -90,7 +94,7 @@ int pp_slave(struct pp_instance *ppi, unsigned char *pkt, int plen)
 				hdr->logMessageInterval;
 
 		} else {
-			pp_diag(ppi, frames, 2, "pp_slave : "
+			pp_diag(ppi, frames, 1, "pp_slave : "
 			     "Delay Resp doesn't match Delay Req\n");
 		}
 
