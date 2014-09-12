@@ -51,7 +51,7 @@ static struct wr_operations wrs_wr_operations = {
 /* ppg and fields */
 static struct pp_globals ppg_static;
 static DSDefault defaultDS;
-static DSCurrent currentDS;
+static DSCurrent currentDS[18];
 static DSParent parentDS;
 static DSTimeProperties timePropertiesDS;
 static struct pp_servo servo;

@@ -65,7 +65,7 @@ static inline struct DSDefault *DSDEF(struct pp_instance *ppi)
 
 static inline struct DSCurrent *DSCUR(struct pp_instance *ppi)
 {
-	return GLBS(ppi)->currentDS;
+	return &GLBS(ppi)->currentDS[ppi->port_idx];
 }
 
 static inline struct DSParent *DSPAR(struct pp_instance *ppi)
