@@ -148,7 +148,7 @@ int wr_servo_init(struct pp_instance *ppi)
 {
 	struct wr_dsport *wrp = WR_DSPOR(ppi);
 	struct wr_servo_state_t *s =
-			&((struct wr_data_t *)ppi->ext_data)->servo_state;
+			&((struct wr_data_t *)ppi->ext_data)->servo_state[ppi->port_idx];
 
 	/* Determine the alpha coefficient */
 	if (wrp->ops->read_calib_data(ppi, 0, 0,
@@ -171,6 +171,8 @@ int wr_servo_init(struct pp_instance *ppi)
 	s->delta_tx_s = ((((int32_t)WR_DSPOR(ppi)->deltaTx.scaledPicoseconds.lsb) >> 16) & 0xffff) | (((int32_t)WR_DSPOR(ppi)->deltaTx.scaledPicoseconds.msb) << 16);
 	s->delta_rx_s = ((((int32_t)WR_DSPOR(ppi)->deltaRx.scaledPicoseconds.lsb) >> 16) & 0xffff) | (((int32_t)WR_DSPOR(ppi)->deltaRx.scaledPicoseconds.msb) << 16);
 
+	if(ppi->slave_prio != 0 )
+		return 0;
 	cur_servo_state.delta_tx_m = (int64_t)s->delta_tx_m;
 	cur_servo_state.delta_rx_m = (int64_t)s->delta_rx_m;
 	cur_servo_state.delta_tx_s = (int64_t)s->delta_tx_s;
@@ -203,7 +205,7 @@ int wr_servo_got_sync(struct pp_instance *ppi, TimeInternal *t1,
 		      TimeInternal *t2)
 {
 	struct wr_servo_state_t *s =
-			&((struct wr_data_t *)ppi->ext_data)->servo_state;
+			&((struct wr_data_t *)ppi->ext_data)->servo_state[ppi->port_idx];
 
 	s->t1 = *t1;
 	s->t1.correct = 1;
@@ -217,7 +219,7 @@ int wr_servo_got_sync(struct pp_instance *ppi, TimeInternal *t1,
 int wr_servo_got_delay(struct pp_instance *ppi, Integer32 cf)
 {
 	struct wr_servo_state_t *s =
-			&((struct wr_data_t *)ppi->ext_data)->servo_state;
+			&((struct wr_data_t *)ppi->ext_data)->servo_state[ppi->port_idx];
 
 	s->t3 = ppi->t3;
 	/*  s->t3.phase = 0; */
@@ -233,7 +235,7 @@ int wr_servo_update(struct pp_instance *ppi)
 {
 	struct wr_dsport *wrp = WR_DSPOR(ppi);
 	struct wr_servo_state_t *s =
-			&((struct wr_data_t *)ppi->ext_data)->servo_state;
+			&((struct wr_data_t *)ppi->ext_data)->servo_state[ppi->port_idx];
 
 	uint64_t tics;
 	uint64_t big_delta_fix;
@@ -241,12 +243,15 @@ int wr_servo_update(struct pp_instance *ppi)
 	static int errcount;
 
 	TimeInternal ts_offset, ts_offset_hw /*, ts_phase_adjust */;
-
+	pp_diag(ppi, servo, 1, "in wr servo update, got_sync=%d\n",got_sync);
+	
 	if(!got_sync)
 		return 0;
 
 	if(!s->t1.correct || !s->t2.correct ||
 	   !s->t3.correct || !s->t4.correct) {
+		pp_diag(ppi, servo, 1, "timestamp incorrect: %d %d %d %d\n",
+		s->t1.correct, s->t2.correct, s->t3.correct, s->t4.correct);
 		errcount++;
 		if (errcount > 5) /* a 2-3 in a row are expected */
 			pp_error("%s: TimestampsIncorrect: %d %d %d %d\n",
@@ -256,7 +261,8 @@ int wr_servo_update(struct pp_instance *ppi)
 	}
 	errcount = 0;
 
-	cur_servo_state.update_count++;
+	if(ppi->slave_prio == 0)
+		cur_servo_state.update_count++;
 
 	got_sync = 0;
 
@@ -280,19 +286,22 @@ int wr_servo_update(struct pp_instance *ppi)
 	ts_offset = ts_add(ts_sub(s->t1, s->t2), picos_to_ts(delay_ms_fix));
 	ts_offset_hw = ts_hardwarize(ts_offset, s->clock_period_ps);
 
-	cur_servo_state.mu = (uint64_t)ts_to_picos(s->mu);
-	cur_servo_state.cur_offset = ts_to_picos(ts_offset);
+	if(ppi->slave_prio == 0)
+	{
+		cur_servo_state.mu = (uint64_t)ts_to_picos(s->mu);
+		cur_servo_state.cur_offset = ts_to_picos(ts_offset);
 
-	cur_servo_state.delay_ms = delay_ms_fix;
-	cur_servo_state.total_asymmetry =
-		(cur_servo_state.mu - 2LL * (int64_t)delay_ms_fix);
-	cur_servo_state.fiber_asymmetry =
-		cur_servo_state.total_asymmetry
-		- (s->delta_tx_m + s->delta_rx_s)
-		+ (s->delta_rx_m + s->delta_tx_s);
+		cur_servo_state.delay_ms = delay_ms_fix;
+		cur_servo_state.total_asymmetry =
+			(cur_servo_state.mu - 2LL * (int64_t)delay_ms_fix);
+		cur_servo_state.fiber_asymmetry =
+			cur_servo_state.total_asymmetry
+			- (s->delta_tx_m + s->delta_rx_s)
+			+ (s->delta_rx_m + s->delta_tx_s);
 
-	cur_servo_state.tracking_enabled = tracking_enabled;
-
+		cur_servo_state.tracking_enabled = tracking_enabled;
+	}
+	
 	s->delta_ms = delay_ms_fix;
 
 	tics = ppi->t_ops->calc_timeout(ppi, 0);
@@ -320,7 +329,8 @@ int wr_servo_update(struct pp_instance *ppi)
 		wrp->ops->enable_timing_output(ppi, 0);
 
 		if (ts_offset_hw.seconds != 0) {
-			strcpy(cur_servo_state.slave_servo_state, "SYNC_SEC");
+			if(ppi->slave_prio == 0)
+				strcpy(cur_servo_state.slave_servo_state, "SYNC_SEC");
 			wrp->ops->adjust_counters(ts_offset_hw.seconds, 0);
 			wrp->ops->adjust_phase(0);
 
@@ -334,7 +344,8 @@ int wr_servo_update(struct pp_instance *ppi)
 		break;
 
 	case WR_SYNC_NSEC:
-		strcpy(cur_servo_state.slave_servo_state, "SYNC_NSEC");
+		if(ppi->slave_prio == 0)
+			strcpy(cur_servo_state.slave_servo_state, "SYNC_NSEC");
 
 		if (ts_offset_hw.nanoseconds != 0) {
 			wrp->ops->adjust_counters(0, ts_offset_hw.nanoseconds);
@@ -349,7 +360,8 @@ int wr_servo_update(struct pp_instance *ppi)
 		break;
 
 	case WR_SYNC_PHASE:
-		strcpy(cur_servo_state.slave_servo_state, "SYNC_PHASE");
+		if(ppi->slave_prio == 0)
+			strcpy(cur_servo_state.slave_servo_state, "SYNC_PHASE");
 		s->cur_setpoint = ts_offset_hw.phase
 			+ ts_offset_hw.nanoseconds * 1000;
 
@@ -381,9 +393,12 @@ int wr_servo_update(struct pp_instance *ppi)
 	}
 
 	case WR_TRACK_PHASE:
-		strcpy(cur_servo_state.slave_servo_state, "TRACK_PHASE");
-		cur_servo_state.cur_setpoint = s->cur_setpoint;
-		cur_servo_state.cur_skew = s->delta_ms - s->delta_ms_prev;
+		if(ppi->slave_prio == 0)
+		{
+			strcpy(cur_servo_state.slave_servo_state, "TRACK_PHASE");
+			cur_servo_state.cur_setpoint = s->cur_setpoint;
+			cur_servo_state.cur_skew = s->delta_ms - s->delta_ms_prev;
+		}
 
 		if (ts_offset_hw.seconds !=0 || ts_offset_hw.nanoseconds != 0)
 				s->state = WR_SYNC_TAI;

@@ -167,7 +167,7 @@ typedef struct{
 
 /* All data used as extension ppsi-wr must be put here */
 struct wr_data_t {
-	struct wr_servo_state_t servo_state;
+	struct wr_servo_state_t servo_state[18];
 };
 
 #endif /* __WREXT_WR_API_H__ */
