@@ -318,6 +318,7 @@ int wr_servo_update(struct pp_instance *ppi)
 
 	switch (s->state) {
 	case WR_WAIT_SYNC_IDLE:
+		pp_diag(ppi, servo, 1, " WR_WAIT_SYNC_IDLE\n");
 		if (!wrp->ops->adjust_in_progress()) {
 			s->state = s->next_state;
 		} else {
@@ -326,13 +327,15 @@ int wr_servo_update(struct pp_instance *ppi)
 		break;
 
 	case WR_SYNC_TAI:
+		pp_diag(ppi, servo, 1, " WR_SYNC_TAI\n");
 		wrp->ops->enable_timing_output(ppi, 0);
 
 		if (ts_offset_hw.seconds != 0) {
+			pp_diag(ppi, servo, 1, " WR_SYNC_TAI-> counters touching at seconds\n");
 			if(ppi->slave_prio == 0)
 				strcpy(cur_servo_state.slave_servo_state, "SYNC_SEC");
 			wrp->ops->adjust_counters(ts_offset_hw.seconds, 0);
-			wrp->ops->adjust_phase(0);
+			wrp->ops->adjust_phase(0, ppi->port_idx);
 
 			s->next_state = WR_SYNC_NSEC;
 			s->state = WR_WAIT_SYNC_IDLE;
@@ -344,10 +347,12 @@ int wr_servo_update(struct pp_instance *ppi)
 		break;
 
 	case WR_SYNC_NSEC:
+		pp_diag(ppi, servo, 1, " WR_SYNC_NSEC\n");
 		if(ppi->slave_prio == 0)
 			strcpy(cur_servo_state.slave_servo_state, "SYNC_NSEC");
 
 		if (ts_offset_hw.nanoseconds != 0) {
+			pp_diag(ppi, servo, 1, " WR_SYNC_TAI-> counters touching at nanoseconds\n");
 			wrp->ops->adjust_counters(0, ts_offset_hw.nanoseconds);
 
 			s->next_state = WR_SYNC_NSEC;
@@ -360,12 +365,13 @@ int wr_servo_update(struct pp_instance *ppi)
 		break;
 
 	case WR_SYNC_PHASE:
+		pp_diag(ppi, servo, 1, " WR_SYNC_PHASE\n");
 		if(ppi->slave_prio == 0)
 			strcpy(cur_servo_state.slave_servo_state, "SYNC_PHASE");
 		s->cur_setpoint = ts_offset_hw.phase
 			+ ts_offset_hw.nanoseconds * 1000;
 
-		wrp->ops->adjust_phase(s->cur_setpoint);
+		wrp->ops->adjust_phase(s->cur_setpoint, ppi->port_idx);
 
 		s->next_state = WR_WAIT_OFFSET_STABLE;
 		s->state = WR_WAIT_SYNC_IDLE;
@@ -377,6 +383,7 @@ int wr_servo_update(struct pp_instance *ppi)
 	{
 		int64_t remaining_offset = abs(ts_to_picos(ts_offset_hw));
 
+		pp_diag(ppi, servo, 1, " WR_WAIT_OFFSET_STABLE\n");
 		if (ts_offset_hw.seconds !=0 || ts_offset_hw.nanoseconds != 0)
 			s->state = WR_SYNC_TAI;
 		else
@@ -393,6 +400,7 @@ int wr_servo_update(struct pp_instance *ppi)
 	}
 
 	case WR_TRACK_PHASE:
+		pp_diag(ppi, servo, 1, "WR_TRACK_PHASE \n");
 		if(ppi->slave_prio == 0)
 		{
 			strcpy(cur_servo_state.slave_servo_state, "TRACK_PHASE");
@@ -408,7 +416,7 @@ int wr_servo_update(struct pp_instance *ppi)
 			// just follow the changes of deltaMS
 			s->cur_setpoint += (s->delta_ms - s->delta_ms_prev);
 
-			wrp->ops->adjust_phase(s->cur_setpoint);
+			wrp->ops->adjust_phase(s->cur_setpoint, ppi->port_idx);
 
 			s->delta_ms_prev = s->delta_ms;
 			s->next_state = WR_TRACK_PHASE;

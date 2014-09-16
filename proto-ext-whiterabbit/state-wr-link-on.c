@@ -16,7 +16,7 @@ int wr_link_on(struct pp_instance *ppi, unsigned char *pkt, int plen)
 
 	if (ppi->is_new_state) {
 		wrp->wrModeOn = TRUE;
-		if(ppi->slave_prio == 0)
+// 		if(ppi->slave_prio == 0)
 			wrp->ops->enable_ptracker(ppi); // might need change
 
 		if (wrp->wrMode == WR_MASTER)

@@ -46,11 +46,13 @@ int wrs_adjust_counters(int64_t adjust_sec, int32_t adjust_nsec)
 	return 0;
 }
 
-int wrs_adjust_phase(int32_t phase_ps)
+int wrs_adjust_phase(int32_t phase_ps, int channel)
 {
 	hexp_pps_params_t p;
 	int ret, rval;
 	p.adjust_phase_shift = phase_ps;
+	p.channel            = channel'
+	
 
 	ret = minipc_call(hal_ch, DEFAULT_TO, &__rpcdef_pps_cmd,
 		&rval, HEXP_PPSG_CMD_ADJUST_PHASE, &p);
