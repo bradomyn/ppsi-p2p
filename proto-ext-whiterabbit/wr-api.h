@@ -97,7 +97,7 @@ struct wr_operations {
 
 	int (*adjust_in_progress)(void);
 	int (*adjust_counters)(int64_t adjust_sec, int32_t adjust_nsec);
-	int (*adjust_phase)(int32_t phase_ps);
+	int (*adjust_phase)(int32_t phase_ps, int channel);
 
 	int (*read_calib_data)(struct pp_instance *ppi,
 			      uint32_t *deltaTx, uint32_t *deltaRx,

@@ -74,6 +74,8 @@ typedef struct {
 
   uint64_t current_sec;
   uint32_t current_nsec;
+  
+  int channel;
 
 } hexp_pps_params_t;
 

@@ -51,7 +51,7 @@ int wrs_adjust_phase(int32_t phase_ps, int channel)
 	hexp_pps_params_t p;
 	int ret, rval;
 	p.adjust_phase_shift = phase_ps;
-	p.channel            = channel'
+	p.channel            = channel;
 	
 
 	ret = minipc_call(hal_ch, DEFAULT_TO, &__rpcdef_pps_cmd,
