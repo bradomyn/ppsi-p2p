@@ -285,6 +285,7 @@ int wr_servo_update(struct pp_instance *ppi)
 
 	ts_offset = ts_add(ts_sub(s->t1, s->t2), picos_to_ts(delay_ms_fix));
 	ts_offset_hw = ts_hardwarize(ts_offset, s->clock_period_ps);
+	pp_diag(ppi, servo, 1, "offset: %d [hw:%d]\n", ts_offset,ts_offset_hw);
 
 	if(ppi->slave_prio == 0)
 	{
@@ -352,7 +353,8 @@ int wr_servo_update(struct pp_instance *ppi)
 			strcpy(cur_servo_state.slave_servo_state, "SYNC_NSEC");
 
 		if (ts_offset_hw.nanoseconds != 0) {
-			pp_diag(ppi, servo, 1, " WR_SYNC_TAI-> counters touching at nanoseconds\n");
+			pp_diag(ppi, servo, 1, " WR_SYNC_NSEC-> counters touching at "
+			"nanoseconds\n");
 			wrp->ops->adjust_counters(0, ts_offset_hw.nanoseconds);
 
 			s->next_state = WR_SYNC_NSEC;

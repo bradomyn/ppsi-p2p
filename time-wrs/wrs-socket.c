@@ -230,6 +230,8 @@ static int wrs_recv_msg(struct pp_instance *ppi, int fd, void *pkt, int len,
 			wrs_linearize_rx_timestamp(t, s->dmtd_phase,
 				cntr_ahead, s->phase_transition, s->clock_period);
 			t->correct = 1;
+			pp_diag(ppi, frames, 1, "[port %d] ddmtd_phase %d\n", ppi->port_idx,
+			s->dmtd_phase);
 		}
 	}
 
