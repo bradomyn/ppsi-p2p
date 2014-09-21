@@ -51,7 +51,7 @@ static struct wr_operations wrs_wr_operations = {
 /* ppg and fields */
 static struct pp_globals ppg_static;
 static DSDefault defaultDS;
-static DSCurrent currentDS[18];
+static DSCurrent currentDS[18]; // per-port to enable hot-swap backup, TODO:use PP_MAX_LINKS ?
 static DSParent parentDS;
 static DSTimeProperties timePropertiesDS;
 static struct pp_servo servo;

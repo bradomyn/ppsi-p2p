@@ -85,7 +85,7 @@ static void s1(struct pp_instance *ppi, MsgHeader *hdr, MsgAnnounce *ann)
 /*ML: backup slave according to the WRSPEC. */
 static void s2(struct pp_instance *ppi, MsgHeader *hdr, MsgAnnounce *ann)
 {
-	ppi->slave_prio=1;
+	ppi->slave_prio=1; // important, it is used later everyhwere to recognize backup port
 	
 	pp_diag(ppi, bmc, 1,"backup slave at port: %d\n",ppi->port_idx);
 	
@@ -252,7 +252,7 @@ check_boundary_clk:
 		* Ebest is better by topology than Erbest */
 	if (!idcmp(&myself.ann.grandmasterIdentity,
 			&m->ann.grandmasterIdentity))
-		goto backup;
+		goto backup; // according to WRSPEC
 // 		goto passive;
 	else
 		goto master;
@@ -262,7 +262,7 @@ passive:
 	pp_diag(ppi, bmc, 1,"%s: passive\n", __func__);
 	return PPS_PASSIVE;
 
-backup:
+backup: // according to WRSPEC, instead of PASSIVE
 	s2(ppi, &m->hdr, &m->ann);
 	pp_diag(ppi, bmc, 1,"%s: backup slave\n", __func__);
 	return PPS_SLAVE;

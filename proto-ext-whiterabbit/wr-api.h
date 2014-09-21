@@ -167,7 +167,8 @@ typedef struct{
 
 /* All data used as extension ppsi-wr must be put here */
 struct wr_data_t {
-	struct wr_servo_state_t servo_state[18];
+	struct wr_servo_state_t servo_state[18]; // per-port to enable hot-swap backup, 
+	                                         //TODO:use some global
 };
 
 #endif /* __WREXT_WR_API_H__ */
